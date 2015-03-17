@@ -1,4 +1,3 @@
-print("in reload: ",...)
 --[[
 
 -- usage --
@@ -12,7 +11,9 @@ box.reload:register(ref,cb) -> cb(ref)
 ]]
 
 local M
+
 if not box.reload then
+	print("loaded: ",table.concat(package.loaded, ", "))
 	M = setmetatable({
 		O = setmetatable({},{
 			-- __mode = 'kv'
@@ -25,11 +26,20 @@ if not box.reload then
 		}),
 	},{
 		__call = function(m,...)
-			local mods = {...}
-			print("reloading "..table.concat(mods,", ").."...")
-			for _,m in pairs(mods) do
-				package.loaded[m] = nil
+			if select('#',...) > 0 then
+				print("Call of reload with args is now deprecated")
 			end
+			--print("now loaded: ",table.concat(package.loaded, ", "))
+			--local mods = {...}
+			--for _,m in pairs(mods) do
+			--	package.loaded[m] = nil
+			--end
+			
+			--local mods = {}
+			--for m,_ in pairs(package.loaded) do
+			--	package.loaded[m] = nil
+			--	table.insert(mods,m)
+			--end
 			dofile("init.lua")
 		end
 	})

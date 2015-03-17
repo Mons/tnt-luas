@@ -1,10 +1,19 @@
-local D = setmetatable({}, { __mode = "kv" })
-local C = setmetatable({}, { __mode = "kv" })
+local old = rawget(_G,'box.conntrack')
 
-local M = setmetatable({
-	D = D;
-	C = C;
-}, {  })
+local M,D,C
+if old then
+	M = old
+	D = M.D
+	C = M.C
+else
+	D = setmetatable({}, { __mode = "kv" })
+	C = setmetatable({}, { __mode = "kv" })
+
+	M = setmetatable({
+		D = D;
+		C = C;
+	}, {  })
+end
 
 box.fiber.ADM = box.fiber.ADM or {}
 
@@ -56,6 +65,8 @@ end
 function M.on_disconnect(ref,cb)
 	D[ref] = cb
 end
+
+rawset(_G,'box.conntrack',M)
 
 return M
 --[[

@@ -15,8 +15,12 @@ if box.info.version > "1.5.4-57" then
 end
 ]]
 
-if not bkp then rawset(_G,'bkp',{_first = true, count = 0}) end
+if not rawget(_G,'bkp') then rawset(_G,'bkp',{_first = true, gen = 0}) end
 if bkp._first then
+	local loaded = {}
+	bkp.loaded = {}
+	for m in pairs(package.loaded) do bkp.loaded[m] = package.loaded[m] end
+	
 	bkp.insert = box.insert
 	bkp.update = box.update
 	bkp.delete = box.delete
@@ -31,7 +35,7 @@ if bkp._first then
 	bkp._first  = false
 	bkp.fibers  = {}
 	
-	print("Loading lua 1st time")
+	print("Loading lua 1st time, loaded: "..table.concat(loaded, ", "))
 	
 	if rawget(_G,'LIBDIR') then
 		package.path = package.path .. ';'..LIBDIR..'/?.lua'
@@ -112,13 +116,23 @@ if bkp._first then
 	]]
 else
 	bkp.first = false
-	bkp.count = bkp.count + 1
+	bkp.gen = bkp.gen + 1
 	rawset(_G,'package',bkp.package)
 	rawset(_G,'require',bkp.require)
 	rawset(_G,'FIRST',false)
-	print("Reloading lua (",bkp.count,")")
+	local reloads = {}
+	for m in pairs(package.loaded) do
+		if not bkp.loaded[m] then
+			package.loaded[m] = nil
+			table.insert(reloads,m)
+		end
+	end
+	print("Reloading lua (",bkp.gen,"), mods: "..table.concat(reloads,", "))
+	require 'box.reload'
+	require 'box.conntrack'
 	box.reload:cleanup()
 end
+
 
 local caller = require 'devel.caller'
 
@@ -204,7 +218,6 @@ function box.steady.intercept_errors(on,printstack)
 			end)
 			bkp.raise(51,msg)
 		end)
-		
 	else
 		box.delete = bkp.delete
 		box.insert = bkp.insert
@@ -216,3 +229,11 @@ function box.steady.intercept_errors(on,printstack)
 	end
 end
 
+setmetatable(box.steady,{
+	__index = { gen = bkp.gen },
+	__newindex = function (t,k,v)
+		error("Readonly "..tostring(k).." -> "..tostring(v),2)
+	end
+})
+
+package.loaded['box.steady'] = box.steady

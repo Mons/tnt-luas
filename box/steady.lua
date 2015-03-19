@@ -28,6 +28,7 @@ if bkp._first then
 	bkp.replace = box.replace
 	bkp.raise  = box.raise
 	bkp.error  = error
+	bkp.dofile = dofile
 	
 	bkp.package = package
 	bkp.require = require
@@ -137,6 +138,19 @@ end
 local caller = require 'devel.caller'
 
 box.steady = box.steady or {}
+
+function dofile(...)
+	--print("begin dofile ",...)
+	local r = { bkp.dofile(...) }
+	--print("end dofile",...)
+	collectgarbage('collect')
+	box.fiber.yield()
+	box.fiber.wrap(function()
+		box.fiber.sleep(1)
+		collectgarbage('collect')
+	end)
+	return unpack(r)
+end
 
 function box.steady.intercept_errors(on,printstack)
 	if on then

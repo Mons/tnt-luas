@@ -7,6 +7,10 @@ setmetatable(M,{
 	__call = function(t,...) return t:new(...) end,
 })
 
+function M:finish()
+	
+end
+
 function M.new(class, host, port, opts)
 	local self = setmetatable({},class)
 	

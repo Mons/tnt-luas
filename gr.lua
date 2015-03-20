@@ -9,15 +9,21 @@ local old = rawget(_G,K)
 
 if old then
 	-- todo signal old to shutdown
-	
+	for k,i in pairs(old) do
+		if type(i) == 'table' then
+			print("got key ",k," ",old[k])
+			if i._c and i._c.fihish then
+				i._c:finish()
+			end
+		end
+	end
 end
 
 local function new ( name )
 	return {
-		name   = name,
-		ok     = false,
-		c      = false,
-		warned = false,
+		_name   = name,
+		_c      = false,
+		_warned = false,
 	}
 end
 
@@ -27,27 +33,26 @@ local M = new('main')
 
 function M:config(host,port,proto)
 	assert(type(self) == 'table', "Static call prohibited")
-	print("called on ",self," name=",self.name," param = ",param)
 	if proto == 'tcp' then
 		local cnn = tcp(host,port)
-		self.c = cnn
+		self._c = cnn
 	elseif proto == 'udp' then
 		local cnn = udp(host,port)
-		self.c = cnn
+		self._c = cnn
 	else
 		error("Bad protocol "..proto, 2)
 	end
 end
 
 function M:send(key,value)
-	if not self.c then
-		if not self.warned then
-			self.warned = true
-			log._log( log.WARN, "Instance `%s' not configured prematurely", self.name )
+	if not self._c then
+		if not self._warned then
+			self._warned = true
+			log._log( log.WARN, "Instance `%s' not configured prematurely", self._name )
 		end
 		return
 	end
-	self.c:send(key, value)
+	self._c:send(key, value)
 end
 
 setmetatable(M,{

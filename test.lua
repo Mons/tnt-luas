@@ -18,6 +18,16 @@ else
 	p = function (f,...) io.stdout:write(string.format(f,...)) end
 end
 
+local _print = print
+function print(...)
+	local t = {...}
+	for _,v in ipairs(t) do
+		t[_] = tostring(v)
+	end
+	p("# %s\n",table.concat(t, ""))
+end
+
+
 local function _out(test,name,diags)
 	seq = seq + 1
 	if test then good = good + 1 else bad = bad + 1 end
@@ -147,6 +157,13 @@ function is_deeply(got,need,name)
 	local err
 	local function _cmp(a, b, rev)
 		local test = true
+		if type(a) ~= 'table' or type(b) ~= 'table' then
+			err = {
+				'expected: '..dumper(b),
+				'     got: '..dumper(a),
+			}
+			return false
+		end
 		for nk,nv in pairs(b) do
 			if a[nk] ~= nil then
 				if type(nv) == 'table' then
@@ -171,8 +188,8 @@ function is_deeply(got,need,name)
 						err = { 'expected.' .. p .. nk .. ' = ' .. dumper(b[nk]), '     got.' .. p .. nk .. ' = ' .. dumper(a[nk]) }
 					end
 					err[3] = '-----'
-					err[4] = '    got: ' .. dumper(got)
-					err[5] = 'expects: ' .. dumper(need)
+					err[4] = '     got: ' .. dumper(got)
+					err[5] = 'expected: ' .. dumper(need)
 				end
 				return false
 			end

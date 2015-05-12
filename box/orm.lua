@@ -307,6 +307,7 @@ function Space:_key(i,...)
 end
 
 function Space:select(index,...)
+	assert(index, ":select requires index as first arg");
 	local idx = type(index) == 'number' and index or self.idx[index].id
 	local list = {box.select(
 		self.id,
@@ -317,7 +318,28 @@ function Space:select(index,...)
 	for _,t in ipairs(list) do
 		table.insert(rv, self.class( self, t ))
 	end
-	return unpack(rv)
+end
+
+function Space:limit_offset(index,limit,offset,...)
+	assert(index, ":limit_offset requires index as first arg");
+	assert(limit, ":limit_offset requires limit as second arg");
+	assert(offset, ":limit_offset requires offset as third arg");
+	local idx = type(index) == 'number' and index or self.idx[index].id
+	local it = box.space[self.id].index[idx]:iterator(box.index.EQ, self:_key(idx,...))
+	local got = 0
+	local ret = {}
+	for t in it do
+		table.insert(ret,t)
+		if offset > 0 then
+			offset = offset - 1
+			table.remove(ret,1)
+		end
+		if #ret >= limit then break end
+	end
+	for _,t in ipairs(ret) do
+		ret[_] = self.class( self, t )
+	end
+	return unpack(ret)
 end
 
 function Space:one(index,...)
@@ -398,6 +420,10 @@ function Space:replace(...)
 	end
 	if not t then return end
 	return self.class( self, t )
+end
+
+function Space:len(...)
+	return box.space[self.id]:len()
 end
 
 function Space:update(...)

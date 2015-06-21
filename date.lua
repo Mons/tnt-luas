@@ -131,4 +131,11 @@ function Date:__tostring()
 	return string.format("%04d-%02d-%02d", self.year, self.month, self.day)
 end
 
+function Date:format(format)
+	if type(format) == 'string' then
+		return string.format(format, self.year, self.month, self.day)
+	end
+	return self:__tostring()
+end
+
 return Date
